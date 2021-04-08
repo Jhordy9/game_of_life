@@ -1,15 +1,14 @@
 defmodule GameOfLife.Game do
-  alias GameOfLife.Grid
+  alias GameOfLife.PetriDish
+
+  @type t :: %__MODULE__{}
 
   defstruct [:world, :generation, :previous_generations]
 
-  def new(options) do
-    size = Keyword.get(options, :size, 32)
-
-    grid = Grid.new(size)
-
+  @spec new(PetriDish.t()) :: t
+  def new(initial_world) do
     %__MODULE__{
-      world: grid,
+      world: initial_world,
       generation: 1,
       previous_generations: []
     }
@@ -20,7 +19,7 @@ defmodule GameOfLife.Game do
   """
 
   def activate_cell(game, x, y) do
-    %{game | world: Grid.activate(game.world, x, y)}
+    %{game | world: PetriDish.activate(game.world, x, y)}
   end
 
   @doc """
@@ -39,8 +38,8 @@ defmodule GameOfLife.Game do
       game.world
       |> Grid.cells_to_analyze()
       |> Enum.filter(fn {x, y} -> will_thrive?(current_state, x, y) end)
-      |> Enum.reduce(Grid.new(current_state.size), fn {x, y}, acc ->
-        Grid.activate(acc, x, y)
+      |> Enum.reduce(PetriDish.clean(current_state), fn {x, y}, acc ->
+        PetriDish.activate(acc, x, y)
       end)
 
     %__MODULE__{
@@ -62,8 +61,8 @@ defmodule GameOfLife.Game do
   """
 
   def will_thrive?(world, x, y) do
-    neighbours = Grid.active_neighbours(world, x, y)
-    active? = Grid.active?(world, x, y)
+    neighbours = PetriDish.active_neighbours(world, x, y)
+    active? = PetriDish.active?(world, x, y)
 
     cond do
       active? and neighbours < 2 ->
